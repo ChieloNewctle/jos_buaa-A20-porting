@@ -5,14 +5,9 @@
 #include <pmap.h>
 #include <error.h>
 #include <sched.h>
+#include <unistd.h>
 
-extern char *KERNEL_SP;
 extern struct Env *curenv;
-
-unsigned __attribute__ ((noinline)) svc_call(int sysno, int a, int b, int u, int v, int w) {
-	printf("svc_call: %d %d %d %d %d %d\n", sysno, a, b, u, v, w);
-	return a * b + u * v * w + sysno;
-}
 
 /* Overview:
  * 	This function is used to print a character on screen.
@@ -20,35 +15,15 @@ unsigned __attribute__ ((noinline)) svc_call(int sysno, int a, int b, int u, int
  * Pre-Condition:
  * 	`c` is the character you want to print.
  */
-void sys_putchar(int sysno, int c, int a2, int a3, int a4, int a5)
+int sys_putc(int sysno, int c)
 {
-	c |= svc_call(1, 2, 3, 4, 5, 6);
 	uart0_putc(c);
-	return ;
+	return 0;
 }
 
-/* Overview:
- * 	This function enables you to copy content of `srcaddr` to `destaddr`.
- *
- * Pre-Condition:
- * 	`destaddr` and `srcaddr` can't be NULL. Also, the `srcaddr` area 
- * 	shouldn't overlap the `destaddr`, otherwise the behavior of this 
- * 	function is undefined.
- *
- * Post-Condition:
- * 	the content of `destaddr` area(from `destaddr` to `destaddr`+`len`) will
- * be same as that of `srcaddr` area.
- */
-void *memcpy(void *destaddr, void const *srcaddr, u_int len)
+int sys_getc(int sysno)
 {
-	char *dest = destaddr;
-	char const *src = srcaddr;
-
-	while (len-- > 0) {
-		*dest++ = *src++;
-	}
-
-	return destaddr;
+	return uart0_getc_non_block();
 }
 
 /* Overview:
@@ -366,10 +341,10 @@ int sys_set_trapframe(int sysno, u_int envid, struct Trapframe *tf)
 {
 	int ret;
 	struct Env *env;
-	if((ret=envid2env(envid, &env, PTE_V)) < 0) {
+	if((ret = envid2env(envid, &env, PTE_V)) < 0) {
 		return ret;
 	}
-	env->env_tf = *tf;
+	bcopy(tf, &env->env_tf, sizeof(struct Trapframe));
 	return 0;
 }
 

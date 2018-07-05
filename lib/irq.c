@@ -35,7 +35,7 @@ void print_tf(struct Trapframe *tf) {
 
 void irq_handler() {
     int interrupt_id = gicc_get_interrupt_id();
-    printf("irq.c:\tIRQ triggered, id: %d\n", interrupt_id);
+    // printf("irq.c:\tIRQ triggered, id: %d\n", interrupt_id);
 
     struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
 

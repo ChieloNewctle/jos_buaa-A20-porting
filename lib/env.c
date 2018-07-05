@@ -313,7 +313,7 @@ load_icode(struct Env *e, u_char *binary, u_int size)
 		return;
 	}
 
-	printf("Entry point: %x\n", entry_point);
+	printf("entry point(env %x): %x\n", e, entry_point);
 
     /***Your Question Here***/
 	e->env_status = ENV_RUNNABLE;
@@ -463,6 +463,8 @@ env_run(struct Env *e)
 	curenv = e;
 
     /*Step 3: Use lcontext() to switch to its address space. */
+    extern u_long mCONTEXT;
+    mCONTEXT = curenv->env_pgdir;
 	lcontext(curenv->env_ttb, curenv->env_id);
 
     /*Step 4: Use env_pop_tf() to restore the environment's

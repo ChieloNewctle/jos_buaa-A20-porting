@@ -4,9 +4,9 @@
 #include <env.h>
 #include <trap.h>
 
-void syscall_putchar(char ch)
+void syscall_putc(char ch)
 {
-	msyscall(SYS_putchar, (int)ch, 0, 0, 0, 0);
+	msyscall(SYS_putc, (int)ch, 0, 0, 0, 0);
 }
 
 
@@ -22,16 +22,10 @@ syscall_yield(void)
 	msyscall(SYS_yield, 0, 0, 0, 0, 0);
 }
 
-
 int
 syscall_env_destroy(u_int envid)
 {
 	return msyscall(SYS_env_destroy, envid, 0, 0, 0, 0);
-}
-int
-syscall_set_pgfault_handler(u_int envid, void (*func)(void), u_int xstacktop)
-{
-	return msyscall(SYS_set_pgfault_handler, envid, (int)func, xstacktop, 0, 0);
 }
 
 int
@@ -83,7 +77,7 @@ syscall_ipc_recv(u_int dstva)
 }
 
 int
-syscall_cgetc()
+syscall_getc()
 {
-	return msyscall(SYS_cgetc, 0, 0, 0, 0, 0);
+	return msyscall(SYS_getc, 0, 0, 0, 0, 0);
 }
