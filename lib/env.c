@@ -103,7 +103,7 @@ env_init(void)
 
 /* Overview:
  *  Initialize the kernel virtual memory layout for environment e.
- *  Allocate a page directory, set e->env_pgdir and e->env_cr3 accordingly,
+ *  Allocate a page directory, set e->env_pgdir and e->env_ttb accordingly,
  *  and initialize the kernel portion of the new environment's address space.
  *  Do NOT map anything into the user portion of the environment's virtual address space.
  */
@@ -142,14 +142,14 @@ env_setup_vm(struct Env *e)
      *  Can you use boot_pgdir as a template?
      */
 
-    /*Step 4: Set e->env_pgdir and e->env_cr3 accordingly. */
+    /*Step 4: Set e->env_pgdir and e->env_ttb accordingly. */
 	e->env_pgdir = pgdir;
-	e->env_cr3 = PADDR(pgdir);
+	e->env_ttb = PADDR(pgdir);
 
     /*VPT and UVPT map the env's own page table, with
      *different permissions. */
-    e->env_pgdir[PDX(VPT)]   = e->env_cr3;
-    e->env_pgdir[PDX(UVPT)]  = e->env_cr3 | PTE_V | PTE_R;
+    e->env_pgdir[PDX(VPT)]   = e->env_ttb;
+    e->env_pgdir[PDX(UVPT)]  = e->env_ttb | PTE_V | PTE_R;
 	return 0;
 }
 
@@ -395,9 +395,9 @@ env_free(struct Env *e)
 		page_decref(pa2page(pa));
 	}
     /* Hint: free the page directory. */
-	pa = e->env_cr3;
+	pa = e->env_ttb;
 	e->env_pgdir = 0;
-	e->env_cr3 = 0;
+	e->env_ttb = 0;
 	page_decref(pa2page(pa));
     /* Hint: return the environment to the free list and remove it from runnable list. */
 	e->env_status = ENV_FREE;
@@ -429,11 +429,11 @@ env_destroy(struct Env *e)
 
 extern void env_pop_tf(struct Trapframe *tf);
 
-void lcontext(Pde *pgdir, u_long context_id) {
+void lcontext(Pde *ttb, u_long context_id) {
     u_long context_id_pre = context_id & ~0xFF;
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id_pre));
-    asm volatile("mcr p15, 0, %0, c2, c0, 0": : "r" (pgdir));
-    asm volatile("mcr p15, 0, %0, c2, c0, 1": : "r" (pgdir));
+    asm volatile("mcr p15, 0, %0, c2, c0, 0": : "r" (ttb));
+    asm volatile("mcr p15, 0, %0, c2, c0, 1": : "r" (ttb));
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id));
 }
 
@@ -463,7 +463,7 @@ env_run(struct Env *e)
 	curenv = e;
 
     /*Step 3: Use lcontext() to switch to its address space. */
-	lcontext(curenv->env_pgdir, curenv->env_id);
+	lcontext(curenv->env_ttb, curenv->env_id);
 
     /*Step 4: Use env_pop_tf() to restore the environment's
      * environment   registers and drop into user mode in the
@@ -532,7 +532,7 @@ void env_check()
 
     /* check env_setup_vm() work well */
     printf("pe1->env_pgdir %x\n",pe1->env_pgdir);
-    printf("pe1->env_cr3 %x\n",pe1->env_cr3);
+    printf("pe1->env_ttb %x\n",pe1->env_ttb);
 
     assert(pe2->env_pgdir[PDX(UTOP)] == boot_pgdir[PDX(UTOP)]);
     assert(pe2->env_pgdir[PDX(UTOP)-1] == 0);
