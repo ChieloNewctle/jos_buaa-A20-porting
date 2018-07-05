@@ -1,13 +1,51 @@
+#include <pmap.h>
 #include <printf.h>
+
+u_long mCONTEXT;
 
 void armv7_init()
 {
     printf("init.c:\tarmv7_init() is called\n");
 
-    int test = 391;
-    printf("test(%d) is at %x\n", test, &test);
-    test = 1096;
-    printf("now test(%d) is at %x\n", test, &test);
+    armv7_detect_memory();
+    armv7_vm_init();
+    page_init();
+
+    physical_memory_manage_check();
+    page_check();
 
     panic("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+}
+
+void bcopy(const void *src, void *dst, size_t len)
+{
+    void *max;
+
+    max = dst + len;
+
+    // copy machine words while possible
+    while (dst + 3 < max) {
+        *(int *)dst = *(int *)src;
+        dst += 4;
+        src += 4;
+    }
+
+    // finish remaining 0-3 bytes
+    while (dst < max) {
+        *(char *)dst = *(char *)src;
+        dst += 1;
+        src += 1;
+    }
+}
+
+void * memset(void *ptr, int value, u_long num) {
+    printf("init.c:\tmemset for %x with %x totally %d\n", (u_long)ptr, value, num);
+    
+    u_char v = value;
+    u_long stacked_value = v | (v << 8) | (v << 16) | (v << 24), *stacked_ptr = ptr, i;
+    for(i = 0; i < num; i += 4)
+        *stacked_ptr = stacked_value;
+    u_char *p = ptr;
+    for(; i < num; ++i)
+        *p = v;
 }
