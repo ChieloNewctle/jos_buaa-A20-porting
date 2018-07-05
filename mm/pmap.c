@@ -458,7 +458,7 @@ tlb_invalidate(Pde *pgdir, u_long va)
 {
     va = ROUNDDOWN(va, BY2PG);
     if(curenv && curenv->env_pgdir == pgdir) {
-        printf("invalidate %x, asid: %x, va: %x\n", curenv, GET_ENV_ASID(curenv->env_id), va);
+        // printf("invalidate %x, asid: %x, va: %x\n", curenv, GET_ENV_ASID(curenv->env_id), va);
         va |= GET_ENV_ASID(curenv->env_id);
     }
     asm("mcr p15, 0, %0, c8, c7, 1"
@@ -558,18 +558,18 @@ page_check(void)
     printf("boot_pgdir[PDX(va)]: %x\n", boot_pgdir[PDX(va)]);
     printf("*KADDR(PTE_ADDR(boot_pgdir[PDX(va)])): %x\n", *(u_long *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])));
     printf("((Pte *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])))[PTX(va)]: %x\n", ((Pte *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])))[PTX(va)]);
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)va = 3911096;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)page2kva(pp1) = 1096391;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)va = 1234;
     *(int *)page2kva(pp1) = 4321;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
+    *(int *)page2kva(pp1) = 0xabcd;
+    *(int *)va = 0xdcba;
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
 
     printf("va2pa(boot_pgdir, va) is %x\n", va2pa(boot_pgdir, va));
     printf("page2pa(pp1) is %x\n", page2pa(pp1));
@@ -655,7 +655,7 @@ void pageout(unsigned va)
     // print_tf(tf);
 
     extern u_long mCONTEXT;
-    printf("pageout entry: %x %x\n", va, mCONTEXT);
+    // printf("pageout entry: %x %x\n", va, mCONTEXT);
 
     int r;
     struct Page *p = NULL;

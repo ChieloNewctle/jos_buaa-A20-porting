@@ -8,7 +8,7 @@ pageout_entry:
 
     mrc p15, 0, r0, c6, c0, 0
     bl pageout
-    b pageout_entry
+    b pageout_return
 
 .global pageout_return
 
