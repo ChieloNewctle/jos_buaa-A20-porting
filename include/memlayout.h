@@ -62,7 +62,7 @@
 #define KSTACKTOP (VPT - 0x100)
 #define KSTKSIZE (8 * BY2PG)
 
-#define IRQSTACK (KERNBASE - 0x10)
+#define EXCSTACK (KERNBASE - 0x10)
 
 #define UVPT (ULIM - PDMAP)
 #define UPAGES (UVPT - PDMAP)

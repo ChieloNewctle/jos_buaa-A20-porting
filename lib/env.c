@@ -420,7 +420,7 @@ env_destroy(struct Env *e)
 		curenv = NULL;
         /* Hint:Why this? */
 		bcopy((void *)KSTACKTOP,
-			  (void *)IRQSTACK - sizeof(struct Trapframe),
+			  (void *)EXCSTACK - sizeof(struct Trapframe),
 			  sizeof(struct Trapframe));
 		printf("i am killed ... \n");
 		sched_yield();
@@ -454,7 +454,7 @@ env_run(struct Env *e)
 	/*Step 1: save register state of curenv. */
     /* Hint: if there is a environment running,you should do
     *  context switch.You can imitate env_destroy() 's behaviors.*/
-	struct Trapframe *tf = (struct Trapframe *)(IRQSTACK - sizeof(struct Trapframe));
+	struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
 	if (curenv) {
 		bcopy(tf, &curenv->env_tf, sizeof(struct Trapframe));
 	}

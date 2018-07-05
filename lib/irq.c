@@ -19,7 +19,7 @@ unsigned get_spsr() {
 }
 
 void save_trapframe(struct Trapframe *dst) {
-    struct Trapframe *tf = (struct Trapframe *)(IRQSTACK - sizeof(struct Trapframe));
+    struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
     bcopy(tf, dst, sizeof(struct Trapframe));
 }
 
@@ -35,11 +35,11 @@ void print_tf(struct Trapframe *tf) {
 
 void irq_handler() {
     int interrupt_id = gicc_get_interrupt_id();
-    // printf("irq.c:\tIRQ triggered, id: %d\n", interrupt_id);
+    printf("irq.c:\tIRQ triggered, id: %d\n", interrupt_id);
 
-    struct Trapframe *tf = (struct Trapframe *)(IRQSTACK - sizeof(struct Trapframe));
+    struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
 
-    // for(const unsigned *u = IRQSTACK - 17 * 4; u < IRQSTACK; ++u) {
+    // for(const unsigned *u = EXCSTACK - 17 * 4; u < EXCSTACK; ++u) {
     //     printf("%x: %x\n", u, *u);
     // }
     // print_tf(tf);
