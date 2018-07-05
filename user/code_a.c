@@ -32,14 +32,14 @@ void umain(int argc, char **argv) {
     printf("bss_seg(%x): %d\n", bss_seg, bss_seg[0]);
 
     printf("Try to access 0x70000000\n");
-    printf("0x70000000: %x", *(const unsigned *)0x70000000);
+    printf("0x70000000: %x\n", *(const unsigned *)0x70000000);
     *(unsigned *)0x70000000 = data_seg[0] * bss_seg[0];
-    printf("0x70000000: %x", *(const unsigned *)0x70000000);
+    printf("0x70000000: %x\n", *(const unsigned *)0x70000000);
 
     printf("Try to access 0x7123456C\n");
-    printf("0x7123456C: %x", *(const unsigned *)0x7123456C);
+    printf("0x7123456C: %x\n", *(const unsigned *)0x7123456C);
     *(unsigned *)0x7123456C = data_seg[0] * bss_seg[0];
-    printf("0x7123456C: %x", *(const unsigned *)0x7123456C);
+    printf("0x7123456C: %x\n", *(const unsigned *)0x7123456C);
 
     while(1) {
         int c = syscall_getc();
