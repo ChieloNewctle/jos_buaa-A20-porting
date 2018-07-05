@@ -12,19 +12,19 @@ Pde boot_pgdir[4096] __attribute__((aligned(16 * 1024))) = {
 };
 
 void init_boot_pgdir() {
-    for(u_long i = PDMAP; i < ULIM; i += PDMAP)
+    for(u_long i = 0; i < ULIM; i += PDMAP)
         boot_pgdir[PDX(i)] = 0;
     for(u_long i = 0; i < DRAMSIZE; i += PDMAP)
-        boot_pgdir[PDX(i + ULIM)] = ((i + DRAMBASE) & PDE_SUPER_SECTION_BASE_MASK) | PDE_SUPER_SECTION;
+        boot_pgdir[PDX(i + ULIM)] = ((i + DRAMBASE) & PDE_SUPER_SECTION_BASE_MASK) | PDE_SUPER_SECTION_C;
     for(u_long i = IOPABASE; i < IOPATOP; i += PDMAP)
-        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION;
+        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION_DEV_USER;
 }
 
 
 /* These variables are set by mips_detect_memory() */
 u_long npage;            /* Amount of memory(in pages) */
 
-struct Page *pages;
+struct Page *pages = NULL;
 static u_long freemem = VPT;
 
 static struct Page_list page_free_list;	/* Free list of physical pages */
@@ -196,7 +196,7 @@ page_init(void)
 	LIST_INIT(&page_free_list);
 
     /* Step 2: Align `freemem` up to multiple of BY2PG. */
-	freemem = ROUND(freemem, BY2PG);
+	freemem = ROUND(freemem, BY2PG * 4);
 
     /* Step 3: Mark all memory blow `freemem` as used(set `pp_ref`
      * filed to 1) */
@@ -208,7 +208,8 @@ page_init(void)
     /* Step 4: Mark the other memory as free. */
 	for(; i < npage; ++i) {
 		pages[i].pp_ref = 0;
-		LIST_INSERT_HEAD(&page_free_list, pages + i, pp_link);
+		if(i % 4 == 0)
+            LIST_INSERT_HEAD(&page_free_list, pages + i, pp_link);
 	}
 
     printf("pmap.c:\t page_init end\n");

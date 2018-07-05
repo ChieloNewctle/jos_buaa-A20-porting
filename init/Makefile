@@ -1,4 +1,4 @@
-INCLUDES := -I ./ -I ../ -I../include
+INCLUDES := -I ./ -I ../ -I../include -I../drivers
 
 %.o: %.c
 	$(CC) $(DEFS) $(CFLAGS) $(INCLUDES) -c $<

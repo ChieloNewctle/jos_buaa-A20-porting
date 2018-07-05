@@ -11,6 +11,7 @@
 
 #include <drivers/uart0/uart0.h>
 #include <printf.h>
+#include <pmap.h>
 
 void raise(int sig)
 {

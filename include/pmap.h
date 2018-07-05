@@ -7,6 +7,8 @@
 #include "printf.h"
 
 
+extern Pde boot_pgdir[(1 << (32 - PDSHIFT))] __attribute__((aligned(16 * 1024)));
+
 LIST_HEAD(Page_list, Page);
 typedef LIST_ENTRY(Page) Page_LIST_entry_t;
 

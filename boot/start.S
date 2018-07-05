@@ -19,7 +19,7 @@ vec_data:
 vec_reserved:
     subs pc, lr, #4
 vec_irq:
-    subs pc, lr, #4 // reserve for irq
+    ldr pc, =irq_entry
 vec_fiq:
     subs pc, lr, #4
 
@@ -56,19 +56,15 @@ _start:
     mcr p15, 0, r0, c1, c0, 1
     nop
 
-    mrc p15, 0, r0, c1, c0
-    orr r0, r0, #(ARMV7_C1_V_BIT)
-    mcr p15, 0, r0, c1, c0
+    // invalidate instruction cache and branch predictor
+    mov r0, #0
+    mcr p15, 0, r0, c7, c5, 0
+    mcr p15, 0, r0, c7, c5, 6
+    nop
 
     mrc p15, 0, r0, c1, c0
-    // enable MMU, data cache, instruction cache, flow prediction, align
+    // enable MMU
     orr r0, r0, #(ARMV7_C1_M_BIT)
-    orr r0, r0, #(ARMV7_C1_C_BIT)
-    orr r0, r0, #(ARMV7_C1_I_BIT)
-    mcr p15, 0, r0, c7, c5, 0
-    orr r0, r0, #(ARMV7_C1_Z_BIT)
-    mcr p15, 0, r0, c7, c5, 6
-    orr r0, r0, #(ARMV7_C1_A_BIT)
     mcr p15, 0, r0, c1, c0
     nop
 
@@ -77,6 +73,21 @@ _start:
 
 
 high_addr:
+    mrc p15, 0, r0, c1, c0
+    // enable data cache, instruction cache, flow prediction, align and high addr vector
+    orr r0, r0, #(ARMV7_C1_C_BIT)
+    orr r0, r0, #(ARMV7_C1_I_BIT)
+    orr r0, r0, #(ARMV7_C1_Z_BIT)
+    orr r0, r0, #(ARMV7_C1_A_BIT)
+    mcr p15, 0, r0, c1, c0
+    nop
+
+    mrc p15, 0, r0, c1, c0
+    // enable high addr vector
+    orr r0, r0, #(ARMV7_C1_V_BIT)
+    mcr p15, 0, r0, c1, c0
+    nop
+
     ldr sp, =KSTACKTOP
     bl init_boot_pgdir
 
