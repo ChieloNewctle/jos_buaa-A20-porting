@@ -13,7 +13,7 @@ extern void umain();
 extern void libmain();
 extern void exit();
 
-extern struct Env *env;
+extern unsigned envid;
 
 
 #define USED(x) (void)(x)
@@ -44,12 +44,11 @@ void user_bzero(void *v, u_int n);
 //////////////////////////////////////////////////syscall_lib
 extern int msyscall(int, int, int, int, int, int);
 
-void syscall_putchar(char ch);
+void syscall_putc(char ch);
+int syscall_getc();
 u_int syscall_getenvid(void);
 void syscall_yield(void);
 int syscall_env_destroy(u_int envid);
-int syscall_set_pgfault_handler(u_int envid, void (*func)(void),
-								u_int xstacktop);
 int syscall_mem_alloc(u_int envid, u_int va, u_int perm);
 int syscall_mem_map(u_int srcid, u_int srcva, u_int dstid, u_int dstva,
 					u_int perm);
@@ -65,7 +64,6 @@ int syscall_set_trapframe(u_int envid, struct Trapframe *tf);
 void syscall_panic(char *msg);
 int syscall_ipc_can_send(u_int envid, u_int value, u_int srcva, u_int perm);
 void syscall_ipc_recv(u_int dstva);
-int syscall_cgetc();
 
 // string.c
 int strlen(const char *s);

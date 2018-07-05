@@ -6,13 +6,14 @@ INCLUDES = -I../include/
 #LD			  := $(CROSS_COMPILE)ld
 # For embedding one program in another
 
+REQUIRES := ../tools ../lib
 BINTOC	:= ../tools/bintoc
-USERLIB := ../drivers/uart0/uart0.o syscall_wrap.o
+USERLIB := libos.o syscall_wrap.o syscall_lib.o ../lib/print.o printf.o
 
 CFLAGS += -nostdlib -static
-INCLUDES += -I../drivers/ -I.
+INCLUDES += -I. -I../include
 
-all: ../tools $(USERLIB) code_a.b code_a.x code_b.x
+all: $(REQUIRES) $(USERLIB) code_a.b code_a.x
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -21,7 +22,7 @@ all: ../tools $(USERLIB) code_a.b code_a.x code_b.x
 	$(BINTOC) user/$* $< $@
 	
 %.b: %.o $(USERLIB)
-	$(LD) -o $@ $(LDFLAGS) -G 0 -static -n -nostdlib -T ./user.lds $^
+	$(LD) -o $@ $(LDFLAGS) -G 0 -static -n -nostdlib -T ./user.lds $^ $(LIBGCC)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<

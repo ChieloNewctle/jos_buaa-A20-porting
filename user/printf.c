@@ -1,50 +1,47 @@
+/*
+ * Copyright (C) 2001 MontaVista Software Inc.
+ * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
+ *
+ * This program is free software; you can redistribute  it and/or modify it
+ * under  the terms of  the GNU General  Public License as published by the
+ * Free Software Foundation;  either version 2 of the  License, or (at your
+ * option) any later version.
+ *
+ */
 
+#include <lib.h>
+#include <print.h>
+#include <printf.h>
 
-#include "lib.h"
-
-
-
-
-void halt(void);
-
-static void user_myoutput(void *arg, const char *s, int l)
+static void myoutput(void* arg, char* s, int l)
 {
-	int i;
+    int i;
 
-	// special termination call
-	if ((l == 1) && (s[0] == '\0')) {
-		return;
-	}
+    // special termination call
+    if ((l == 1) && (s[0] == '\0'))
+        return;
 
-	for (i = 0; i < l; i++) {
-		syscall_putchar(s[i]);
-
-		if (s[i] == '\n') {
-			syscall_putchar('\n');
-		}
-	}
+    for (i = 0; i < l; i++) {
+        if (s[i] == '\n')
+            syscall_putc('\r');
+        syscall_putc(s[i]);
+    }
 }
 
-void writef(char *fmt, ...)
+void printf(char* fmt, ...)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	user_lp_Print(user_myoutput, 0, fmt, ap);
-	va_end(ap);
+    va_list ap;
+    va_start(ap, fmt);
+    lp_Print(myoutput, 0, fmt, ap);
+    va_end(ap);
 }
 
-void
-_user_panic(const char *file, int line, const char *fmt, ...)
+void _panic(const char* file, int line, const char* fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-
-	va_start(ap, fmt);
-	writef("panic at %s:%d: ", file, line);
-	user_lp_Print(user_myoutput, 0, (char *)fmt, ap);
-	writef("\n");
-	va_end(ap);
-
-
-	for (;;);
+    va_start(ap, fmt);
+    printf("panic at %s:%d: ", file, line);
+    lp_Print(myoutput, 0, (char*)fmt, ap);
+    va_end(ap);
 }

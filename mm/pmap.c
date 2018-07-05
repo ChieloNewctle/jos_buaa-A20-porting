@@ -17,7 +17,7 @@ void init_boot_pgdir() {
     for(u_long i = 0; i < DRAMSIZE; i += PDMAP)
         boot_pgdir[PDX(i + ULIM)] = ((i + DRAMBASE) & PDE_SUPER_SECTION_BASE_MASK) | PDE_SUPER_SECTION_C;
     for(u_long i = IOPABASE; i < IOPATOP; i += PDMAP)
-        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION_DEV_USER;
+        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION_DEV;
 }
 
 
@@ -458,9 +458,10 @@ tlb_invalidate(Pde *pgdir, u_long va)
 {
     va = ROUNDDOWN(va, BY2PG);
     if(curenv && curenv->env_pgdir == pgdir) {
+        printf("invalidate %x, asid: %x, va: %x\n", curenv, GET_ENV_ASID(curenv->env_id), va);
         va |= GET_ENV_ASID(curenv->env_id);
     }
-    asm("mcr p15, 0, %0, c8, c7, 0"
+    asm("mcr p15, 0, %0, c8, c7, 1"
         :
         : "r"(va)
         :);
@@ -648,30 +649,32 @@ page_check(void)
     printf("page_check() succeeded!\n");
 }
 
-void pageout(int va, int context)
+void pageout(unsigned va)
 {
-    u_long r;
+    // struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
+    // print_tf(tf);
+
+    extern u_long mCONTEXT;
+    printf("pageout entry: %x %x\n", va, mCONTEXT);
+
+    int r;
     struct Page *p = NULL;
 
-    if (context < 0x80000000) {
-        panic("tlb refill and alloc error!");
+    if (va >= 0x80000000) {
+        panic(">>>> KERNEL MEMORY ACCESS <<<<\n");
     }
 
-    if ((va > 0x7f400000) && (va < 0x7f800000)) {
-        panic(">>>>>>>>>>>>>>>>>>>>>>it's env's zone");
-    }
-
-    if (va < 0x10000) {
-        panic("^^^^^^TOO LOW^^^^^^^^^");
+    if (PDX(va) <= 0) {
+        panic("^^^^^^ TOO LOW ^^^^^^^^^\n");
     }
 
     if ((r = page_alloc(&p)) < 0) {
-        panic ("page alloc error!");
+        panic("pageout:\tpage alloc error!\n");
     }
 
     p->pp_ref++;
 
-    page_insert((Pde *)context, p, VA2PFN(va), PTE_R);
-    printf("pageout:\t@@@___0x%x___@@@  ins a page \n", va);
+    page_insert((Pde *)mCONTEXT, p, va, PTE_V | PTE_R);
+    printf("pageout:\t@@@___0x%x___@@@  ins a page\n", va);
 }
 

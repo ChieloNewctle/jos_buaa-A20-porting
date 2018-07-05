@@ -7,7 +7,7 @@
 .section ".text.except_vec"
 
 vec_reset:
-    ldr pc, =_start
+    ldr pc, =endless
 vec_undefined_instruct:
     movs pc, lr
 vec_soft:
@@ -15,7 +15,7 @@ vec_soft:
 vec_prefetch:
     subs pc, lr, #4
 vec_data:
-    subs pc, lr, #8
+    ldr pc, =pageout_entry
 vec_reserved:
     subs pc, lr, #4
 vec_irq:
