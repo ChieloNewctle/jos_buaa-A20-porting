@@ -27,6 +27,7 @@
 #define PDE_SECTION 0x10402 // section + shareable + domain 0 + inaccessible for user
 #define PDE_SECTION_C (PDE_SECTION | 0x8) // PDE_SECTION + cachable
 #define PDE_SECTION_DEV (PDE_SECTION | 0x4) // PDE_SECTION + bufferable
+#define PDE_SECTION_DEV_USER (PDE_SECTION_DEV | 0xC00) // PDE_SECTION + bufferable + full access
 #define PDE_SUPER_SECTION 0x50402 // super section + shareable + inaccessible for user (domain 0 always)
 #define PDE_SUPER_SECTION_C (PDE_SUPER_SECTION | 0x8) // PDE_SUPER_SECTION + cachable
 #define PDE_PAGE_TABLE 0x21 // page table + domain 1

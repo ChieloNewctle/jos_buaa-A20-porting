@@ -1,7 +1,11 @@
+#include <env.h>
+#include <timer2/timer2.h>
 #include <pmap.h>
 #include <printf.h>
+#include <trap.h>
+#include <sched.h>
 
-u_long mCONTEXT;
+u_long mCONTEXT = 0;
 
 void armv7_init()
 {
@@ -13,6 +17,23 @@ void armv7_init()
 
     physical_memory_manage_check();
     page_check();
+
+    env_init();
+    sched_init();
+    env_check();
+
+    trap_init();
+
+    /*you can create some processes(env) here. in terms of binary code, please refer current directory/code_a.c
+     * code_b.c*/
+    /*you may want to create process by MACRO, please read env.h file, in which you will find it. this MACRO is very
+     * interesting, have fun please*/
+    ENV_CREATE_PRIORITY(user_code_a, 2);
+    printf("env code a\n");
+    ENV_CREATE_PRIORITY(user_code_b, 1);
+    printf("env code b\n");
+
+    timer2_init();
 
     panic("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 }

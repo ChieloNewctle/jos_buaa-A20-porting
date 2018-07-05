@@ -1,4 +1,4 @@
-INCLUDES := -I./ -I../ -I../include/
+INCLUDES := -I./ -I../ -I../include/ -I../drivers/
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
@@ -7,7 +7,7 @@ INCLUDES := -I./ -I../ -I../include/
 
 .PHONY: clean
 
-all: print.o printf.o env.o
+all: kernel_elfloader.o irq_entry.o irq.o env.o env_pop_tf.o print.o printf.o sched.o trap.o
 
 clean:
 	rm -rf *~ *.o

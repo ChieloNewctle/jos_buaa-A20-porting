@@ -2,7 +2,7 @@
 
 include ../include.mk
 
-drivers := uart0
+drivers := uart0 gic timer2
 
 .PHONY:	all $(drivers) 
 
