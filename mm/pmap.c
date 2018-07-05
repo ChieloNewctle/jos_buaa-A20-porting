@@ -460,7 +460,7 @@ tlb_invalidate(Pde *pgdir, u_long va)
     if(curenv && curenv->env_pgdir == pgdir) {
         va |= GET_ENV_ASID(curenv->env_id);
     }
-    asm("mcr p15, 0, %0, c8, c7, 0"
+    asm("mcr p15, 0, %0, c8, c7, 1"
         :
         : "r"(va)
         :);
