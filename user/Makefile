@@ -7,12 +7,12 @@ INCLUDES = -I../include/
 # For embedding one program in another
 
 BINTOC	:= ../tools/bintoc
-USERLIB := ../drivers/uart0/uart0.o
+USERLIB := ../drivers/uart0/uart0.o syscall_wrap.o
 
 CFLAGS += -nostdlib -static
-INCLUDES += -I../drivers/
+INCLUDES += -I../drivers/ -I.
 
-all: ../tools $(USERLIB) code_a.x code_b.x
+all: ../tools $(USERLIB) code_a.b code_a.x code_b.x
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<

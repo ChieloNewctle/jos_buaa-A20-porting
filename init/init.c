@@ -30,10 +30,18 @@ void armv7_init()
      * interesting, have fun please*/
     ENV_CREATE_PRIORITY(user_code_a, 2);
     printf("env code a\n");
-    ENV_CREATE_PRIORITY(user_code_b, 1);
-    printf("env code b\n");
+    // ENV_CREATE_PRIORITY(user_code_b, 1);
+    // printf("env code b\n");
 
     timer2_init();
+
+    for(int i = 0, j = 0;; ++i) {
+        if(i & 0x4000000) {
+            uart0_putc('0' + j);
+            j = (j + 1) % 10;
+            i = 0;
+        }
+    }
 
     panic("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 }

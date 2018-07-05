@@ -11,7 +11,7 @@ vec_reset:
 vec_undefined_instruct:
     movs pc, lr
 vec_soft:
-    movs pc, lr // reserve for syscall
+    ldr pc, =svc_entry
 vec_prefetch:
     subs pc, lr, #4
 vec_data:
