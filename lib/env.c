@@ -56,7 +56,7 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
     /*Step 1: Assign value to e using envid. */
 	e = envid ? &envs[ENVX(envid)] : curenv;
 
-	if (e->env_status == ENV_FREE || (envid && e->env_id != envid)) {
+	if (e->env_status == ENV_FREE || (envid && e->env_id != envid) || (!envid && !curenv)) {
 		*penv = 0;
 		return -E_BAD_ENV;
 	}
