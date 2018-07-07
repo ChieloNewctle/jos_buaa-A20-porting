@@ -67,7 +67,7 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
      *  must be either the current environment.
      *  or an immediate child of the current environment.If not, error! */
     /*Step 2: Make a check according to checkperm. */
-	if (checkperm && e != curenv && e->env_parent_id != curenv->env_id) {
+	if (checkperm && (e != curenv || e->env_parent_id != curenv->env_id)) {
 		*penv = 0;
 		return -E_BAD_ENV;
 	}
@@ -472,7 +472,8 @@ env_run(struct Env *e)
      * the   environment.
      */
     /* Hint: You should use GET_ENV_ASID there.Think why? */
-    // print_tf(&curenv->env_tf);
+    printf("ENV %x:\n", e);
+    print_tf(&curenv->env_tf);
 	env_pop_tf(&curenv->env_tf);
 
 }

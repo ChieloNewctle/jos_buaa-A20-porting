@@ -81,34 +81,6 @@ int sys_env_destroy(int sysno, u_int envid)
 }
 
 /* Overview:
- * 	Set envid's pagefault handler entry point and exception stack.
- * 
- * Pre-Condition:
- * 	xstacktop points one byte past exception stack.
- *
- * Post-Condition:
- * 	The envid's pagefault handler will be set to `func` and its
- * 	exception stack will be set to `xstacktop`.
- * 	Returns 0 on success, < 0 on error.
- */
-int sys_set_pgfault_handler(int sysno, u_int envid, u_int func, u_int xstacktop)
-{
-	// Your code here.
-	struct Env *env;
-	int ret;
-
-	if((ret = envid2env(envid, &env, PTE_V)) < 0) {
-		printf("sys_set_pgfault_handler: wrong envid\n");
-		return ret;
-	}
-	env->env_pgfault_handler = func;
-	env->env_xstacktop = xstacktop;
-
-	return 0;
-	//	panic("sys_set_pgfault_handler not implemented");
-}
-
-/* Overview:
  * 	Allocate a page of memory and map it at 'va' with permission
  * 'perm' in the address space of 'envid'.
  *
@@ -263,6 +235,32 @@ int sys_env_alloc(void)
 	if((r = env_alloc(&e, curenv->env_id)) < 0) {
 		printf("sys_env_alloc: unable allocate a env\n");
 		return r;
+	}
+	Pde *src_pgdir = curenv->env_pgdir, *dst_pgdir = e->env_pgdir;
+	for(u_long pdx = 0; pdx < PDX(ULIM); ++pdx) {
+		if(!(src_pgdir[pdx] & PDE_PAGE_TABLE))
+			continue;
+		Pte *table = KADDR(PTE_ADDR(src_pgdir[pdx]));
+		for(u_long offset = 0; offset < PDMAP; offset += BY2PG) {
+			if(!(table[PTX(offset)] & PTE_V))
+				continue;
+			u_long va = (pdx << PDSHIFT) | offset;
+			struct Page *p = pa2page(PG_ADDR_BASE(table[PTX(offset)]));
+			if(!p) {
+				printf("sys_env_alloc: unable to fetch page\n");
+				return -E_INVAL;
+			}
+			struct Page *np;
+			if((r = page_alloc(&np)) < 0) {
+				printf("sys_env_alloc: unable to alloc a page\n");
+				return r;
+			}
+			bcopy(page2kva(p), page2kva(np), BY2PG);
+			if((r = page_insert(dst_pgdir, np, va, PG_ADDR_OFFSET(table[PTX(offset)]))) < 0) {
+				printf("sys_env_alloc: unable to insert a page\n");
+				return r;
+			}
+		}
 	}
 	bcopy((void *)EXCSTACK - sizeof(struct Trapframe), &(e->env_tf), sizeof(struct Trapframe));
 	e->env_status = ENV_NOT_RUNNABLE;
