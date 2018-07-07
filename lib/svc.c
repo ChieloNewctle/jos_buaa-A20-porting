@@ -312,7 +312,7 @@ int sys_set_env_status(int sysno, u_int envid, u_int status)
 		printf("sys_set_env_status: invalid status\n");
 		return -E_INVAL;
 	}
-	if((ret = envid2env(envid, &env, PTE_V)) < 0) {
+	if((ret = envid2env(envid, &env, 1)) < 0) {
 		printf("sys_set_env_status: invalib envid\n");
 		return ret;
 	}

@@ -1,10 +1,11 @@
 #include <lib.h>
 
 void umain(int argc, char *argv[]) {
-    printf("code_b forking\n");
+    printf("BBBB>>> code_b forking\n");
     int pid = fork();
+    printf("BBBB>>> pid: %d\n", pid);
     if(pid == 0) {
-        printf("I'm child\n");
+        printf("BBBB>>> I'm child\n");
         for(int i = 0, j = 0;; ++i) {
             if(i & 0x400000) {
                 printf("%c", 'a' + j);
@@ -13,7 +14,7 @@ void umain(int argc, char *argv[]) {
             }
         }
     } else {
-        printf("I'm father\n");
+        printf("BBBB>>> I'm father\n");
     }
     return 0;
 }
