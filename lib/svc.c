@@ -64,6 +64,7 @@ void sys_yield(void)
  */
 int sys_env_destroy(int sysno, u_int envid)
 {
+	printf("calling env_destroy %d\n", envid);
 	/*
 		printf("[%08x] exiting gracefully\n", curenv->env_id);
 		env_destroy(curenv);
@@ -260,6 +261,7 @@ int sys_env_alloc(void)
 				printf("sys_env_alloc: unable to insert a page\n");
 				return r;
 			}
+			printf("copy page %x to %x at %x\n", p, np, va);
 		}
 	}
 	bcopy((void *)EXCSTACK - sizeof(struct Trapframe), &(e->env_tf), sizeof(struct Trapframe));
