@@ -28,10 +28,10 @@ void armv7_init()
      * code_b.c*/
     /*you may want to create process by MACRO, please read env.h file, in which you will find it. this MACRO is very
      * interesting, have fun please*/
-    ENV_CREATE_PRIORITY(user_code_a, 2);
-    printf("env code a\n");
-    // ENV_CREATE_PRIORITY(user_code_b, 1);
-    // printf("env code b\n");
+    // ENV_CREATE_PRIORITY(user_code_a, 2);
+    // printf("env code a\n");
+    ENV_CREATE_PRIORITY(user_code_b, 1);
+    printf("env code b\n");
 
     timer2_init();
 
@@ -67,14 +67,29 @@ void bcopy(const void *src, void *dst, size_t len)
     }
 }
 
-void * memset(void *ptr, int value, u_long num) {
+void *memset(void *ptr, int value, u_long num) {
     printf("init.c:\tmemset for %x with %x totally %d\n", (u_long)ptr, value, num);
     
     u_char v = value;
-    u_long stacked_value = v | (v << 8) | (v << 16) | (v << 24), *stacked_ptr = ptr, i;
-    for(i = 0; i < num; i += 4)
+    u_long stacked_value = v | (v << 8) | (v << 16) | (v << 24), *stacked_ptr = ptr;
+    u_long i;
+    for(i = 0; i + 3 < num; i += 4, ++stacked_ptr)
         *stacked_ptr = stacked_value;
-    u_char *p = ptr;
-    for(; i < num; ++i)
+    u_char *p = stacked_ptr;
+    for(; i < num; ++i, ++p)
         *p = v;
+    return ptr;
+}
+
+void *memcpy(void *dst, const void *src, u_long num) {
+    printf("init.c:\tmemcpy for %x with %x totally %d\n", src, dst, num);
+    
+    u_long *dst_long = dst, *src_long = src;
+    u_long i;
+    for(i = 0; i + 3 < num; i += 4, ++src_long, ++dst_long)
+        *dst_long = *src_long;
+    u_char *dst_char = dst_long, *src_char = src_long;
+    for(; i < num; ++i, ++src_char, ++dst_char)
+        *dst_char = *src_char;
+    return dst;
 }
