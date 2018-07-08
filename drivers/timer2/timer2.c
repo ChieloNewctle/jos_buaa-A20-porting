@@ -19,7 +19,7 @@
 
 void timer2_init(void)
 {
-    writel(0x100, TMR2_INTV);
+    writel(TIMER_INVERTAL, TMR2_INTV);
     writel(readl(TMR_IRQ_EN) | TMR2_IRQ_EN, TMR_IRQ_EN);
     writel(TMR2_CTRL_V, TMR2_CTRL);
     gicd_set_enable(TMR2_GIC_SRC_ID);

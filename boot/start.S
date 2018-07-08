@@ -7,15 +7,15 @@
 .section ".text.except_vec"
 
 vec_reset:
-    ldr pc, =_start
+    ldr pc, =endless
 vec_undefined_instruct:
     movs pc, lr
 vec_soft:
-    movs pc, lr // reserve for syscall
+    ldr pc, =svc_entry
 vec_prefetch:
     subs pc, lr, #4
 vec_data:
-    subs pc, lr, #8
+    ldr pc, =pageout_entry
 vec_reserved:
     subs pc, lr, #4
 vec_irq:
@@ -74,7 +74,7 @@ _start:
 
 high_addr:
     mrc p15, 0, r0, c1, c0
-    // enable data cache, instruction cache, flow prediction, align and high addr vector
+    // enable data cache, instruction cache, flow prediction, align
     orr r0, r0, #(ARMV7_C1_C_BIT)
     orr r0, r0, #(ARMV7_C1_I_BIT)
     orr r0, r0, #(ARMV7_C1_Z_BIT)

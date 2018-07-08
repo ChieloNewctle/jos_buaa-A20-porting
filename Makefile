@@ -42,7 +42,6 @@ all: $(modules) kernel
 
 kernel: $(modules)
 	$(LD) $(LDFLAGS) -o $(kernel_elf) -N -T $(link_script) $(objects) $(LIBGCC)
-	$(STRIP) --strip-unneeded $(kernel_elf)
 	$(OBJCOPY) -O binary $(kernel_elf) $(kernel_bin)
 	$(tools_dir)/mkimage -A arm -O linux -T kernel -C none -a $(load_addr) -e $(entry_addr) -d $(kernel_bin) $(target)
 	$(tools_dir)/mkimage -A arm -T script -O linux -d $(boot_script) $(boot_bin)

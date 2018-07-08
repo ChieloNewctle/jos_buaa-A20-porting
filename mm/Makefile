@@ -7,7 +7,7 @@ INCLUDES := -I./ -I../ -I../include/
 
 .PHONY: clean
 
-all: pmap.o 
+all: pmap.o pageout_entry.o
 
 clean:
 	rm -rf *~ *.o

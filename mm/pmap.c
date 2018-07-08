@@ -8,7 +8,7 @@
 Pde boot_pgdir[4096] __attribute__((aligned(16 * 1024))) = {
     [PDX(DRAMBASE)] = DRAMBASE | PDE_SECTION,
     [PDX(ULIM)] = DRAMBASE | PDE_SECTION,
-    [PDX(KSTACKTOP)] = ((KSTACKTOP - ULIM + DRAMBASE) & 0xFFF00000) | PDE_SECTION,
+    [PDX(KSTACKTOP - 1)] = (((KSTACKTOP - 1) - ULIM + DRAMBASE) & 0xFFF00000) | PDE_SECTION,
 };
 
 void init_boot_pgdir() {
@@ -17,7 +17,7 @@ void init_boot_pgdir() {
     for(u_long i = 0; i < DRAMSIZE; i += PDMAP)
         boot_pgdir[PDX(i + ULIM)] = ((i + DRAMBASE) & PDE_SUPER_SECTION_BASE_MASK) | PDE_SUPER_SECTION_C;
     for(u_long i = IOPABASE; i < IOPATOP; i += PDMAP)
-        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION_DEV_USER;
+        boot_pgdir[PDX(i - IOPABASE + IOVABASE)] = i | PDE_SECTION_DEV;
 }
 
 
@@ -25,7 +25,7 @@ void init_boot_pgdir() {
 u_long npage;            /* Amount of memory(in pages) */
 
 struct Page *pages = NULL;
-static u_long freemem = VPT;
+static u_long freemem = KERNTOP;
 
 static struct Page_list page_free_list;	/* Free list of physical pages */
 
@@ -177,6 +177,7 @@ void armv7_vm_init()
      * for process management. Then map the physical address to `UENVS`. */
     envs = (struct Env *)alloc(NENV * sizeof(struct Env), BY2PG, 1);
     printf("to memory %x for struct Envs.\n", envs);
+    printf("check zeor: %x\n", envs->env_sched_link);
 
     printf("pmap.c:\t mips vm init success\n");
 }
@@ -458,6 +459,7 @@ tlb_invalidate(Pde *pgdir, u_long va)
 {
     va = ROUNDDOWN(va, BY2PG);
     if(curenv && curenv->env_pgdir == pgdir) {
+        // printf("invalidate %x, asid: %x, va: %x\n", curenv, GET_ENV_ASID(curenv->env_id), va);
         va |= GET_ENV_ASID(curenv->env_id);
     }
     asm("mcr p15, 0, %0, c8, c7, 1"
@@ -557,18 +559,18 @@ page_check(void)
     printf("boot_pgdir[PDX(va)]: %x\n", boot_pgdir[PDX(va)]);
     printf("*KADDR(PTE_ADDR(boot_pgdir[PDX(va)])): %x\n", *(u_long *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])));
     printf("((Pte *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])))[PTX(va)]: %x\n", ((Pte *)KADDR(PTE_ADDR(boot_pgdir[PDX(va)])))[PTX(va)]);
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)va = 3911096;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)page2kva(pp1) = 1096391;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
     *(int *)va = 1234;
     *(int *)page2kva(pp1) = 4321;
-    printf("(*va): %d\n", *(const int *)va);
-    printf("(*page2kva(pp1)): %d\n", *(const int *)page2kva(pp1));
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
+    *(int *)page2kva(pp1) = 0xabcd;
+    *(int *)va = 0xdcba;
+    assert(*(const int *)va == *(const int *)page2kva(pp1));
 
     printf("va2pa(boot_pgdir, va) is %x\n", va2pa(boot_pgdir, va));
     printf("page2pa(pp1) is %x\n", page2pa(pp1));
@@ -648,30 +650,32 @@ page_check(void)
     printf("page_check() succeeded!\n");
 }
 
-void pageout(int va, int context)
+void pageout(unsigned va)
 {
-    u_long r;
+    // struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
+    // print_tf(tf);
+
+    extern u_long mCONTEXT;
+    // printf("pageout entry: %x %x\n", va, mCONTEXT);
+
+    int r;
     struct Page *p = NULL;
 
-    if (context < 0x80000000) {
-        panic("tlb refill and alloc error!");
+    if (va >= 0x80000000) {
+        panic(">>>> KERNEL MEMORY ACCESS <<<<\n");
     }
 
-    if ((va > 0x7f400000) && (va < 0x7f800000)) {
-        panic(">>>>>>>>>>>>>>>>>>>>>>it's env's zone");
-    }
-
-    if (va < 0x10000) {
-        panic("^^^^^^TOO LOW^^^^^^^^^");
+    if (PDX(va) <= 0) {
+        panic("^^^^^^ TOO LOW ^^^^^^^^^\n");
     }
 
     if ((r = page_alloc(&p)) < 0) {
-        panic ("page alloc error!");
+        panic("pageout:\tpage alloc error!\n");
     }
 
     p->pp_ref++;
 
-    page_insert((Pde *)context, p, VA2PFN(va), PTE_R);
-    printf("pageout:\t@@@___0x%x___@@@  ins a page \n", va);
+    page_insert((Pde *)mCONTEXT, p, va, PTE_V | PTE_R);
+    printf("pageout:\t@@@___0x%x___@@@  ins a page\n", va);
 }
 

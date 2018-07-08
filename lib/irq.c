@@ -5,6 +5,7 @@
 #include <gic/gic.h>
 #include <armv7.h>
 #include <sched.h>
+#include <env.h>
 
 unsigned get_cpsr() {
     unsigned cpsr;
@@ -19,11 +20,21 @@ unsigned get_spsr() {
 }
 
 void save_trapframe(struct Trapframe *dst) {
-    struct Trapframe *tf = (struct Trapframe *)(IRQSTACK - sizeof(struct Trapframe));
-    bcopy(tf, dst, sizeof(struct Trapframe));
+    if(dst) {
+        struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
+        bcopy(tf, dst, sizeof(struct Trapframe));
+    }
+}
+
+void load_trapframe(struct Trapframe *src) {
+    if(src) {
+        struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
+        bcopy(src, tf, sizeof(struct Trapframe));
+    }
 }
 
 void print_tf(struct Trapframe *tf) {
+    printf(">>>>>>>>> TF\n");
     printf("user sp: %x\n", tf->usr_sp);
     printf("user lr: %x\n", tf->usr_lr);
     printf("original cpsr: %x\n", tf->ori_cpsr);
@@ -31,23 +42,24 @@ void print_tf(struct Trapframe *tf) {
         printf("regs[%d]: %x\n", i, tf->regs[i]);
     }
     printf("exception return pc: %x\n", tf->exc_pc);
+    printf("<<<<<<<<< TF\n");
 }
 
 void irq_handler() {
     int interrupt_id = gicc_get_interrupt_id();
     // printf("irq.c:\tIRQ triggered, id: %d\n", interrupt_id);
 
-    struct Trapframe *tf = (struct Trapframe *)(IRQSTACK - sizeof(struct Trapframe));
+    struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
 
-    // for(const unsigned *u = IRQSTACK - 17 * 4; u < IRQSTACK; ++u) {
+    // for(const unsigned *u = EXCSTACK - 17 * 4; u < EXCSTACK; ++u) {
     //     printf("%x: %x\n", u, *u);
     // }
     // print_tf(tf);
     
     if((get_spsr() & ARMV7_MODE_MASK) == ARMV7_SVC_MODE) {
-        printf("from svc, saving Trapframe\n");
+        // printf("from svc, saving Trapframe\n");
         save_trapframe(KSTACKTOP);
-        printf("saved to %x\n", KSTACKTOP);
+        // printf("saved to %x\n", KSTACKTOP);
     }
     
     if(interrupt_id == TMR2_GIC_SRC_ID) {

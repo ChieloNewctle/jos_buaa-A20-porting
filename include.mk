@@ -10,7 +10,6 @@ CFLAGS			:= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer -marm -nostartfil
 LD				:= $(CROSS_COMPILE)ld
 LDFLAGS			:= -static
 OBJCOPY			:= $(CROSS_COMPILE)objcopy
-STRIP			:= $(CROSS_COMPILE)strip
 
 LIBGCC			:= /usr/lib/gcc-cross/arm-linux-gnueabi/5.4.0/libgcc.a
 

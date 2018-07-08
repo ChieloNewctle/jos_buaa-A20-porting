@@ -82,3 +82,11 @@ char uart0_getc(void)
     while (!(readl(UART0_LSR) & (1))) {}
     return (char)readl(UART0_RBR);
 }
+
+char uart0_getc_non_block(void)
+{
+    if (!(readl(UART0_LSR) & (1))) {
+        return 0;
+    }
+    return (char)readl(UART0_RBR);
+}
