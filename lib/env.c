@@ -242,6 +242,7 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
 			return r;
 		}
 		++p->pp_ref;
+        bzero(page2kva(p), BY2PG);
 		if (i) {
 			bcopy(bin + i - offset, (char *)page2kva(p), BY2PG <= bin_size - i ? BY2PG : bin_size - i);
 		} else {
@@ -254,13 +255,13 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
 	}
 	/*Step 2: alloc pages to reach `sgsize` when `bin_size` < `sgsize`.
     * i has the value of `bin_size` now. */
-	for (; i - offset < sgsize; i += BY2PG) {
+	for (; i < sgsize; i += BY2PG) {
 		r = page_alloc(&p);
 		if (r < 0) {
 			return r;
 		}
 		++p->pp_ref;
-		bzero((Pde *)page2kva(p), BY2PG);
+		bzero(page2kva(p), BY2PG);
 		r = page_insert(env->env_pgdir, p, va + i - offset, PTE_V | PTE_R);
 		if (r < 0) {
 			return r;

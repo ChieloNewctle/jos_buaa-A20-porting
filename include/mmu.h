@@ -43,6 +43,7 @@
 
 #define PTE_V 0x42A // small page + shareable + cachable + read only for user
 #define PTE_R 0x030 // read and write for user
+#define PTE_LIBRARY 0x001 // execute-never
 
 #define PTE_PAGE_BASE_MASK 0xFFFFF000
 

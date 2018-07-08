@@ -19,6 +19,10 @@ svc_vec:
     .word sys_panic
     .word sys_ipc_can_send
     .word sys_ipc_recv
+    .word sys_va_perm
+    .word sys_va_ref
+    .word sys_dev_read
+    .word sys_dev_write
 
 
 .global svc_entry

@@ -1,19 +1,18 @@
-INCLUDES = -I../include/
+lib_dir := ../lib
+tools_dir := ../tools
 
-#CROSS_COMPILE := /usr/eldk/usr/bin/mips_4KC-
-#CC			  := $(CROSS_COMPILE)gcc
-#CFLAGS		  := -O -G 0 -mno-abicalls -fno-builtin -Wa,-xgot -Wall -fPIC
-#LD			  := $(CROSS_COMPILE)ld
-# For embedding one program in another
+BINTOC := $(tools_dir)/bintoc
+FSFORMAT := $(tools_dir)/fsformat
 
-REQUIRES := ../tools ../lib
-BINTOC	:= ../tools/bintoc
-USERLIB := libos.o syscall_wrap.o syscall_lib.o ../lib/print.o printf.o fork.o ipc.o
+REQUIRES := $(lib_dir) $(tools_dir)
+
+USERLIB := libos.o syscall_wrap.o syscall_lib.o ../lib/print.o printf.o fork.o ipc.o \
+	string.o fd.o file.o fsipc.o pipe.o console.o fprintf.o
 
 CFLAGS += -nostdlib -static
 INCLUDES += -I. -I../include
 
-all: $(REQUIRES) $(USERLIB) code_a.x code_b.x fktest.b fktest.x pingpong.x
+all: $(REQUIRES) $(USERLIB) code_a.x code_b.x fktest.b fktest.x pingpong.x fstest.x
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<

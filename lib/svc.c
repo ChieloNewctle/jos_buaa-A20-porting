@@ -9,6 +9,55 @@
 
 extern struct Env *curenv;
 
+int sys_dev_read(int sysno, u_long dstva, u_long offset, u_long length) {
+	extern unsigned char binary_fs_img_start[];
+	extern unsigned binary_fs_img_size;
+	if(offset >= binary_fs_img_size || offset + length > binary_fs_img_size) {
+		printf("sys_dev_read: invalid arguments\n");
+		return -E_INVAL;
+	}
+	return memcpy(dstva, binary_fs_img_start + offset, length) != NULL;
+}
+
+int sys_dev_write(int sysno, u_long srcva, u_long offset, u_long length) {
+	extern unsigned char binary_fs_img_start[];
+	extern unsigned binary_fs_img_size;
+	if(offset >= binary_fs_img_size || offset + length > binary_fs_img_size) {
+		printf("sys_dev_write: invalid arguments\n");
+		return -E_INVAL;
+	}
+	return memcpy(binary_fs_img_start + offset, srcva, length) != NULL;
+}
+
+int sys_va_perm(int sysno, u_long va) {
+	if(va >= ULIM) {
+		printf("sys_va_perm: 0x%08x is not for user\n", va);
+		return -E_INVAL;
+	}
+	if((curenv->env_pgdir[PDX(va)] & PDE_PAGE_TABLE) != PDE_PAGE_TABLE) {
+		return 0;
+	}
+	Pte *pgtable = KADDR(PTE_ADDR(curenv->env_pgdir[PDX(va)]));
+	return PG_ADDR_OFFSET(pgtable[PTX(va)]);
+}
+
+int sys_va_ref(int sysno, u_long va) {
+	if(va >= ULIM) {
+		printf("sys_va_ref: 0x%08x is not for user\n", va);
+		return -E_INVAL;
+	}
+	u_long pa = va2pa(curenv->env_pgdir, va);
+	if(pa == ~0) {
+		return 0;
+	}
+	struct Page *p = pa2page(pa);
+	if(!p) {
+		printf("sys_va_ref: 0x%08x does not refer to a page\n", va);
+		return -E_INVAL;
+	}
+	return p->pp_ref;
+}
+
 /* Overview:
  * 	This function is used to print a character on screen.
  * 
@@ -242,15 +291,23 @@ int sys_env_alloc(void)
 				printf("sys_env_alloc: unable to fetch page\n");
 				return -E_INVAL;
 			}
-			struct Page *np;
-			if((r = page_alloc(&np)) < 0) {
-				printf("sys_env_alloc: unable to alloc a page\n");
-				return r;
-			}
-			bcopy(page2kva(p), page2kva(np), BY2PG);
-			if((r = page_insert(dst_pgdir, np, va, PG_ADDR_OFFSET(table[PTX(offset)]))) < 0) {
-				printf("sys_env_alloc: unable to insert a page\n");
-				return r;
+			int perm = PG_ADDR_OFFSET(va);
+			if(perm == (PTE_V | PTE_R)) {
+				struct Page *np;
+				if((r = page_alloc(&np)) < 0) {
+					printf("sys_env_alloc: unable to alloc a page\n");
+					return r;
+				}
+				bcopy(page2kva(p), page2kva(np), BY2PG);
+				if((r = page_insert(dst_pgdir, np, va, PG_ADDR_OFFSET(table[PTX(offset)]))) < 0) {
+					printf("sys_env_alloc: unable to insert a page\n");
+					return r;
+				}
+			} else {
+				if((r = page_insert(dst_pgdir, p, va, PG_ADDR_OFFSET(table[PTX(offset)]))) < 0) {
+					printf("sys_env_alloc: unable to insert an existed page\n");
+					return r;
+				}
 			}
 		}
 	}
@@ -425,7 +482,7 @@ int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva, u_int per
 
 	e->env_tf.regs[0] = e->env_ipc_value;
 	u_int *r_whom = e->env_ipc_arg_whom, *r_perm = e->env_ipc_arg_perm;
-	printf("r_whom: %x, r_perm: %x\n", r_whom, r_perm);
+	// printf("r_whom: %x, r_perm: %x\n", r_whom, r_perm);
 	if(r_whom) {
 		struct Page *p = page_lookup(e->env_pgdir, r_whom, NULL);
 		if(p > 0) {

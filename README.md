@@ -6,3 +6,10 @@ This is a repository for porting JOS directed by
 
 Require the cross compiler for ARM configurated in `include.mk`.
 Use u-boot to load kernel image (`uImage.my`) with startup script (`boot.src`) in an SD card.
+
+
+# `boot.cmd` Line Ending
+
+The line ending of `boot.cmd` should be like LF(single `\n`) style.
+Otherwise, it may cause problem when booting from u-boot.
+

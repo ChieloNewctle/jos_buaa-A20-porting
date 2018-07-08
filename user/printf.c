@@ -44,4 +44,6 @@ void _panic(const char* file, int line, const char* fmt, ...)
     printf("panic at %s:%d: ", file, line);
     lp_Print(myoutput, 0, (char*)fmt, ap);
     va_end(ap);
+
+    for(;;) {}
 }

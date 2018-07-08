@@ -1,6 +1,7 @@
-modules := bintoc
+modules := bintoc fsformat
 
-CFLAGS += -O2
+INCLUDES += -I../include
+CFLAGS += -O2 $(INCLUDES)
 
 all: $(modules)
 

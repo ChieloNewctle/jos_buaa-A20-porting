@@ -4,6 +4,26 @@
 #include <env.h>
 #include <trap.h>
 
+int syscall_dev_read(u_long dstva, u_long offset, u_long length) {
+	return msyscall(SYS_dev_read, dstva, offset, length, 0, 0);
+}
+
+int syscall_dev_write(u_long srcva, u_long offset, u_long length) {
+	return msyscall(SYS_dev_write, srcva, offset, length, 0, 0);
+}
+
+int syscall_va_perm(u_long va) {
+	return msyscall(SYS_va_perm, va, 0, 0, 0, 0);
+}
+
+int pageref(u_long va) {
+	return syscall_va_ref(va);
+}
+
+int syscall_va_ref(u_long va) {
+	return msyscall(SYS_va_ref, va, 0, 0, 0, 0);
+}
+
 void syscall_putc(char ch)
 {
 	msyscall(SYS_putc, (int)ch, 0, 0, 0, 0);

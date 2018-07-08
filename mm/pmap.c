@@ -652,8 +652,8 @@ page_check(void)
 
 void pageout(unsigned va)
 {
-    // struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
-    // print_tf(tf);
+    struct Trapframe *tf = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
+    print_tf(tf);
 
     extern u_long mCONTEXT;
     // printf("pageout entry: %x %x\n", va, mCONTEXT);

@@ -1,12 +1,12 @@
 #ifndef LIB_H
 #define LIB_H
 
-// #include "fd.h"
+#include "fd.h"
 #include <pmap.h>
 #include <mmu.h>
 #include <trap.h>
 #include <env.h>
-// #include <args.h>
+#include <error.h>
 #include <unistd.h>
 /////////////////////////////////////////////////////head
 extern void umain();
@@ -28,6 +28,10 @@ int fork(void);
 //////////////////////////////////////////////////syscall_lib
 extern int msyscall(int, int, int, int, int, int);
 
+int syscall_dev_read(u_long dstva, u_long offset, u_long length);
+int syscall_dev_write(u_long srcva, u_long offset, u_long length);
+int syscall_va_perm(u_long va);
+int syscall_va_ref(u_long va);
 void syscall_putc(char ch);
 int syscall_getc();
 u_int syscall_getenvid(void);
@@ -53,7 +57,8 @@ int syscall_ipc_recv(u_int dstva, u_int *whom, u_int *perm);
 int strlen(const char *s);
 char *strcpy(char *dst, const char *src);
 const char *strchr(const char *s, char c);
-void *memcpy(void *destaddr, void const *srcaddr, u_int len);
+void *memcpy(void *destaddr, const void *srcaddr, u_long len);
+void *memset(void *ptr, int value, u_long num);
 int strcmp(const char *p, const char *q);
 
 // ipc.c
@@ -71,14 +76,11 @@ int iscons(int fdnum);
 int pipe(int pfd[2]);
 int pipeisclosed(int fdnum);
 
-// pageref.c
-int	pageref(void *);
-
 // pgfault.c
 void set_pgfault_handler(void (*fn)(u_int va));
 
 // fprintf.c
-int fwritef(int fd, const char *fmt, ...);
+int fprintf(int fd, const char *fmt, ...);
 
 // fsipc.c
 int	fsipc_open(const char *, u_int, struct Fd *);
@@ -107,9 +109,6 @@ int	read_map(int fd, u_int offset, void **blk);
 int	delete(const char *path);
 int	ftruncate(int fd, u_int size);
 int	sync(void);
-
-#define user_assert(x)	\
-	do {	if (!(x)) user_panic("assertion failed: %s", #x); } while (0)
 
 /* File open modes */
 #define	O_RDONLY	0x0000		/* open for reading only */

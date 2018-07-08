@@ -10,6 +10,7 @@ init_dir	:= init
 lib_dir		:= lib
 mm_dir		:= mm
 user_dir	:= user
+fs_dir		:= fs
 tools_dir	:= tools
 kernel_elf	:= kernel.elf
 kernel_bin	:= kernel.bin
@@ -22,9 +23,12 @@ entry_addr	:= 0x40010000
 boot_script	:= boot.cmd
 boot_bin	:= boot.scr
 
+fs_img := fs.img
+fs_uImage := uImage.fs
+
 link_script	:= $(tools_dir)/kernel.lds
 
-modules		:= tools boot drivers init lib mm user $(test_dir)
+modules		:= tools boot drivers init lib mm user fs $(test_dir)
 objects		:= $(boot_dir)/start.o \
 				$(init_dir)/main.o \
 				$(init_dir)/init.o \
@@ -33,7 +37,8 @@ objects		:= $(boot_dir)/start.o \
 				$(drivers_dir)/timer2/timer2.o \
 				$(lib_dir)/*.o \
 				$(mm_dir)/*.o \
-				$(user_dir)/*.x
+				$(user_dir)/*.x \
+				$(fs_dir)/*.x
 
 
 .PHONY: all $(modules) clean
