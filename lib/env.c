@@ -430,11 +430,23 @@ env_destroy(struct Env *e)
 extern void env_pop_tf(struct Trapframe *tf);
 
 void lcontext(Pde *ttb, u_long context_id) {
-    u_long context_id_pre = context_id & ~0xFF;
+    context_id += 1 << ASIDSHIFT;
+
+    const int zero = 0;
+    asm volatile ("" ::: "memory"); /* barrier */
+    /* clean entire D cache -> push to external memory. */
+    asm volatile ("1: mrc p15, 0, r15, c7, c10, 3\n"
+                    " bne 1b\n" ::: "cc");
+    /* drain the write buffer */
+    asm volatile ("mcr 15, 0, %0, c7, c10, 4"::"r" (zero));
+
+    u_long context_id_pre = context_id & ~ASIDMASK;
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id_pre));
     asm volatile("mcr p15, 0, %0, c2, c0, 0": : "r" (ttb));
     asm volatile("mcr p15, 0, %0, c2, c0, 1": : "r" (ttb));
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id));
+
+    asm volatile("mcr p15, 0, %0, c8, c7, 0": : "r" (zero));
 }
 
 /* Overview:
