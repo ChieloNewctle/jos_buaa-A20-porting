@@ -28,47 +28,23 @@ void armv7_init()
      * code_b.c*/
     /*you may want to create process by MACRO, please read env.h file, in which you will find it. this MACRO is very
      * interesting, have fun please*/
+
     // ENV_CREATE_PRIORITY(user_code_a, 2);
-    // printf("env code a\n");
-    ENV_CREATE_PRIORITY(user_code_b, 1);
-    printf("env code b\n");
+    // ENV_CREATE_PRIORITY(user_code_b, 1);
+    ENV_CREATE_PRIORITY(user_fktest, 1);
 
     timer2_init();
-
-    for(int i = 0, j = 0;; ++i) {
-        if(i & 0x4000000) {
-            uart0_putc('0' + j);
-            j = (j + 1) % 10;
-            i = 0;
-        }
-    }
+    printf("init.c: timer2 initialed\n");
 
     panic("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 }
 
-void bcopy(const void *src, void *dst, size_t len)
-{
-    void *max;
-
-    max = dst + len;
-
-    // copy machine words while possible
-    while (dst + 3 < max) {
-        *(int *)dst = *(int *)src;
-        dst += 4;
-        src += 4;
-    }
-
-    // finish remaining 0-3 bytes
-    while (dst < max) {
-        *(char *)dst = *(char *)src;
-        dst += 1;
-        src += 1;
-    }
+void bcopy(const void *src, void *dst, size_t n) {
+    memcpy(dst, src, n);
 }
 
 void *memset(void *ptr, int value, u_long num) {
-    printf("init.c:\tmemset for %x with %x totally %d\n", (u_long)ptr, value, num);
+    // printf("init.c:\tmemset for %x with %x totally %d\n", (u_long)ptr, value, num);
     
     u_char v = value;
     u_long stacked_value = v | (v << 8) | (v << 16) | (v << 24), *stacked_ptr = ptr;
@@ -82,7 +58,7 @@ void *memset(void *ptr, int value, u_long num) {
 }
 
 void *memcpy(void *dst, const void *src, u_long num) {
-    printf("init.c:\tmemcpy for %x with %x totally %d\n", src, dst, num);
+    // printf("init.c:\tmemcpy from %x to %x totally %d\n", src, dst, num);
     
     u_long *dst_long = dst, *src_long = src;
     u_long i;

@@ -8,12 +8,12 @@ INCLUDES = -I../include/
 
 REQUIRES := ../tools ../lib
 BINTOC	:= ../tools/bintoc
-USERLIB := libos.o syscall_wrap.o syscall_lib.o ../lib/print.o printf.o fork.o
+USERLIB := libos.o syscall_wrap.o syscall_lib.o ../lib/print.o printf.o fork.o ipc.o
 
 CFLAGS += -nostdlib -static
 INCLUDES += -I. -I../include
 
-all: $(REQUIRES) $(USERLIB) code_b.x
+all: $(REQUIRES) $(USERLIB) code_a.x code_b.x fktest.b fktest.x pingpong.x
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<

@@ -8,7 +8,7 @@
 Pde boot_pgdir[4096] __attribute__((aligned(16 * 1024))) = {
     [PDX(DRAMBASE)] = DRAMBASE | PDE_SECTION,
     [PDX(ULIM)] = DRAMBASE | PDE_SECTION,
-    [PDX(KSTACKTOP)] = ((KSTACKTOP - ULIM + DRAMBASE) & 0xFFF00000) | PDE_SECTION,
+    [PDX(KSTACKTOP - 1)] = (((KSTACKTOP - 1) - ULIM + DRAMBASE) & 0xFFF00000) | PDE_SECTION,
 };
 
 void init_boot_pgdir() {
@@ -25,7 +25,7 @@ void init_boot_pgdir() {
 u_long npage;            /* Amount of memory(in pages) */
 
 struct Page *pages = NULL;
-static u_long freemem = VPT;
+static u_long freemem = KERNTOP;
 
 static struct Page_list page_free_list;	/* Free list of physical pages */
 
@@ -177,6 +177,7 @@ void armv7_vm_init()
      * for process management. Then map the physical address to `UENVS`. */
     envs = (struct Env *)alloc(NENV * sizeof(struct Env), BY2PG, 1);
     printf("to memory %x for struct Envs.\n", envs);
+    printf("check zeor: %x\n", envs->env_sched_link);
 
     printf("pmap.c:\t mips vm init success\n");
 }

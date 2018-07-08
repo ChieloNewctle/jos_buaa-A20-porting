@@ -11,7 +11,8 @@
  * Hint: remember to fix "envid" in the child process!
  */
 int fork(void) {
-	// Your code here.
+	printf(">>>>> forking <<<<<\n");
+
 	u_int newenvid;
 	extern struct Env *envs;
 	extern struct Env *env;
@@ -25,6 +26,7 @@ int fork(void) {
 	// page duplication is done by syscall_env_alloc
 	if(newenvid == 0) {
 		envid = syscall_getenvid();
+		printf("fork.c: reset envid %d\n", envid);
 		return 0;
 	}
 	if(syscall_set_env_status(newenvid, ENV_RUNNABLE) < 0) {

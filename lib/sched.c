@@ -33,6 +33,7 @@ void sched_yield(void)
 			env_run(iter);
 		}
 	}
+	load_trapframe(KSTACKTOP);
 }
 
 void sched_init() {

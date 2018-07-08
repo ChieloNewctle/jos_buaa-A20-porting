@@ -126,14 +126,12 @@ env_setup_vm(struct Env *e)
 	}
 	++p->pp_ref;
 	pgdir = (Pde *)page2kva(p);
-    printf("new page dir %x\n", pgdir);
+    printf("env.c: <env_setup_vm> new page dir %x\n", pgdir);
 
     /*Step 2: Zero pgdir's field before UTOP. */
 	bzero(pgdir, sizeof(Pde) * PDX(UTOP));
-    printf("%x %x\n", pgdir, sizeof(Pde) * PDX(UTOP));
 
     /*Step 3: Copy kernel's boot_pgdir to pgdir. */
-    printf("%x %x %x\n", boot_pgdir + PDX(UTOP), pgdir + PDX(UTOP), sizeof(Pde) * ((1 << (32 - PDSHIFT)) - PDX(UTOP)));
 	bcopy(boot_pgdir + PDX(UTOP), pgdir + PDX(UTOP), sizeof(Pde) * ((1 << (32 - PDSHIFT)) - PDX(UTOP)));
     /* Hint:
      *  The VA space of all envs is identical above UTOP
@@ -148,8 +146,8 @@ env_setup_vm(struct Env *e)
 
     /*VPT and UVPT map the env's own page table, with
      *different permissions. */
-    e->env_pgdir[PDX(VPT)]   = e->env_ttb;
-    e->env_pgdir[PDX(UVPT)]  = e->env_ttb | PTE_V | PTE_R;
+    // e->env_pgdir[PDX(VPT)]   = e->env_ttb;
+    // e->env_pgdir[PDX(UVPT)]  = e->env_ttb | PTE_V | PTE_R;
 	return 0;
 }
 
@@ -184,7 +182,7 @@ env_alloc(struct Env **new, u_int parent_id)
 		return -E_NO_FREE_ENV;
 	}
 	e = LIST_FIRST(&env_free_list);
-    printf("fetch new free env %x\n", e);
+    printf("env.c: <env_alloc> fetch new free env %x\n", e);
     
     /*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
@@ -207,7 +205,7 @@ env_alloc(struct Env **new, u_int parent_id)
 	LIST_REMOVE(e, env_link);
 
 	*new = e;
-	printf("new env: %x\n", *new);
+	printf("env.c: <env_alloc> new env: %x\n", *new);
 	return 0;
 }
 
@@ -313,7 +311,7 @@ load_icode(struct Env *e, u_char *binary, u_int size)
 		return;
 	}
 
-	printf("entry point(env %x): %x\n", e, entry_point);
+	printf("env.c: <load_icode> entry point(env %x): %x\n", e, entry_point);
 
     /***Your Question Here***/
 	e->env_status = ENV_RUNNABLE;
@@ -418,10 +416,6 @@ env_destroy(struct Env *e)
     /* Hint: schedule to run a new environment. */
 	if (curenv == e) {
 		curenv = NULL;
-        /* Hint:Why this? */
-		bcopy((void *)KSTACKTOP,
-			  (void *)EXCSTACK - sizeof(struct Trapframe),
-			  sizeof(struct Trapframe));
 		printf("i am killed ... \n");
 		sched_yield();
 	}
@@ -430,11 +424,23 @@ env_destroy(struct Env *e)
 extern void env_pop_tf(struct Trapframe *tf);
 
 void lcontext(Pde *ttb, u_long context_id) {
-    u_long context_id_pre = context_id & ~0xFF;
+    context_id += 1 << ASIDSHIFT;
+
+    const int zero = 0;
+    asm volatile ("" ::: "memory"); /* barrier */
+    /* clean entire D cache -> push to external memory. */
+    asm volatile ("1: mrc p15, 0, r15, c7, c10, 3\n"
+                    " bne 1b\n" ::: "cc");
+    /* drain the write buffer */
+    asm volatile ("mcr 15, 0, %0, c7, c10, 4"::"r" (zero));
+
+    u_long context_id_pre = context_id & ~ASIDMASK;
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id_pre));
     asm volatile("mcr p15, 0, %0, c2, c0, 0": : "r" (ttb));
     asm volatile("mcr p15, 0, %0, c2, c0, 1": : "r" (ttb));
     asm volatile("mcr p15, 0, %0, c13, c0, 1": : "r" (context_id));
+
+    asm volatile("mcr p15, 0, %0, c8, c7, 0": : "r" (zero));
 }
 
 /* Overview:
@@ -471,9 +477,15 @@ env_run(struct Env *e)
      * environment   registers and drop into user mode in the
      * the   environment.
      */
-    /* Hint: You should use GET_ENV_ASID there.Think why? */
-    printf("env_run %d:\n", e->env_id);
-    print_tf(&curenv->env_tf);
+    
+    // printf("env_run %d: pc %x, *pc %x\n", e->env_id, e->env_tf.exc_pc, *(const u_long *)e->env_tf.exc_pc);
+    // if(e->env_tf.usr_sp < USTACKTOP) {
+    //     printf("call stack:\n");
+    //     for(u_long *iter = e->env_tf.usr_sp; iter < USTACKTOP; ++iter)
+    //         printf("0x%08x: %08x\n", iter, *iter);
+    // }
+
+    // print_tf(&curenv->env_tf);
 	env_pop_tf(&curenv->env_tf);
 
 }

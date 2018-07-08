@@ -58,11 +58,10 @@
 
 #define ULIM 0x80000000
  
-#define VPT (ULIM + 4 * PDMAP)
-#define KSTACKTOP (VPT - 0x100)
-#define KSTKSIZE (8 * BY2PG)
+#define KERNTOP (ULIM + 8 * PDMAP)
+#define KSTACKTOP (KERNTOP - 2 * PDMAP)
 
-#define EXCSTACK (KERNBASE - 0x10)
+#define EXCSTACK (KERNTOP)
 
 #define UVPT (ULIM - PDMAP)
 #define UPAGES (UVPT - PDMAP)

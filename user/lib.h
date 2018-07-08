@@ -18,20 +18,7 @@ extern unsigned envid;
 
 #define USED(x) (void)(x)
 //////////////////////////////////////////////////////printf
-#include <stdarg.h>
-//#define		LP_MAX_BUF	80
-
-void user_lp_Print(void (*output)(void *, const char *, int),
-				   void *arg,
-				   const char *fmt,
-				   va_list ap);
-
-void writef(char *fmt, ...);
-
-void _user_panic(const char *, int, const char *, ...)
-__attribute__((noreturn));
-
-#define user_panic(...) _user_panic(__FILE__, __LINE__, __VA_ARGS__)
+#include <printf.h>
 
 
 /////////////////////////////////////////////////////fork spawn
@@ -60,7 +47,7 @@ int syscall_set_env_status(u_int envid, u_int status);
 int syscall_set_trapframe(u_int envid, struct Trapframe *tf);
 void syscall_panic(char *msg);
 int syscall_ipc_can_send(u_int envid, u_int value, u_int srcva, u_int perm);
-void syscall_ipc_recv(u_int dstva);
+int syscall_ipc_recv(u_int dstva, u_int *whom, u_int *perm);
 
 // string.c
 int strlen(const char *s);
