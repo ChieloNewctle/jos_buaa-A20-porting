@@ -7,10 +7,8 @@ void trap_init(void)
 {
     // set exception vector
     extern u_long mCONTEXT;
-    printf("mCONTEXT: %x\n", mCONTEXT);
     int r = page_insert(mCONTEXT, &pages[0], 0xFFFF0000, 0); // read-only for user
     assert(r == 0);
-    printf("%x %x\n", mCONTEXT, *(const unsigned *)0xFFFF0000);
 
     // GIC initialization
     gicd_ctrl_enable();
