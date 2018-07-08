@@ -32,6 +32,7 @@ void armv7_init()
     // ENV_CREATE_PRIORITY(user_code_a, 2);
     // ENV_CREATE_PRIORITY(user_code_b, 1);
     ENV_CREATE_PRIORITY(user_fktest, 1);
+    // ENV_CREATE_PRIORITY(user_pingpong, 1);
 
     timer2_init();
     printf("init.c: timer2 initialed\n");

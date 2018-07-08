@@ -364,6 +364,8 @@ int sys_ipc_recv(int sysno, u_int dstva, u_int *whom, u_int *perm)
 	}
 	curenv->env_ipc_recving = 1;
 	curenv->env_ipc_dstva = dstva;
+	curenv->env_ipc_arg_whom = whom;
+	curenv->env_ipc_arg_perm = perm;
 	my_set_env_status(curenv, ENV_NOT_RUNNABLE);
 	sys_yield();
 }
@@ -385,8 +387,7 @@ int sys_ipc_recv(int sysno, u_int dstva, u_int *whom, u_int *perm)
  *
  * Hint: the only function you need to call is envid2env.
  */
-int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva,
-					 u_int perm)
+int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva, u_int perm)
 {
 
 	int r;
@@ -423,7 +424,7 @@ int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva,
 	e->env_ipc_from = curenv->env_id;
 
 	e->env_tf.regs[0] = e->env_ipc_value;
-	u_int *r_whom = (u_int *)e->env_tf.regs[2], *r_perm = (u_int *)e->env_tf.regs[3];
+	u_int *r_whom = e->env_ipc_arg_whom, *r_perm = e->env_ipc_arg_perm;
 	printf("r_whom: %x, r_perm: %x\n", r_whom, r_perm);
 	if(r_whom) {
 		struct Page *p = page_lookup(e->env_pgdir, r_whom, NULL);
