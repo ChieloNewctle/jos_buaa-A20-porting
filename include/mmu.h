@@ -42,7 +42,7 @@
 #define PTE_ADDR(pte) ((u_long)(pte) & PDE_PAGE_TABLE_BASE_MASK)
 
 #define PTE_V 0x42A // small page + shareable + cachable + read only for user
-#define PTE_R 0x30 // read and write for user
+#define PTE_R 0x030 // read and write for user
 
 #define PTE_PAGE_BASE_MASK 0xFFFFF000
 

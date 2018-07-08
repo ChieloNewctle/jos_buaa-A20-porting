@@ -74,7 +74,7 @@ _start:
 
 high_addr:
     mrc p15, 0, r0, c1, c0
-    // enable data cache, instruction cache, flow prediction, align and high addr vector
+    // enable data cache, instruction cache, flow prediction, align
     orr r0, r0, #(ARMV7_C1_C_BIT)
     orr r0, r0, #(ARMV7_C1_I_BIT)
     orr r0, r0, #(ARMV7_C1_Z_BIT)

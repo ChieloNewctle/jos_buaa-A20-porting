@@ -9,7 +9,6 @@ void syscall_putc(char ch)
 	msyscall(SYS_putc, (int)ch, 0, 0, 0, 0);
 }
 
-
 u_int
 syscall_getenvid(void)
 {
@@ -70,10 +69,10 @@ syscall_ipc_can_send(u_int envid, u_int value, u_int srcva, u_int perm)
 	return msyscall(SYS_ipc_can_send, envid, value, srcva, perm, 0);
 }
 
-void
-syscall_ipc_recv(u_int dstva)
+int
+syscall_ipc_recv(u_int dstva, u_int *whom, u_int *perm)
 {
-	msyscall(SYS_ipc_recv, dstva, 0, 0, 0, 0);
+	return msyscall(SYS_ipc_recv, dstva, whom, perm, 0, 0);
 }
 
 int

@@ -21,7 +21,7 @@
 
 .macro RESTORE_ALL basereg
     ldmfd \basereg!, {r4-r6}
-    msr spsr_c, r6
+    msr spsr, r6
     
     mrs r7, cpsr
     bic r8, r7, #ARMV7_MODE_MASK

@@ -45,9 +45,6 @@ u_int sys_getenvid(void)
  */
 void sys_yield(void)
 {
-	// struct Trapframe * src = (struct Trapframe *)(KERNEL_SP - sizeof(struct Trapframe));
-	struct Trapframe * dst = (struct Trapframe *)(EXCSTACK - sizeof(struct Trapframe));
-	// bcopy((void *)src, (void *)dst, sizeof(struct Trapframe));
 	sched_yield();
 }
 
@@ -64,11 +61,6 @@ void sys_yield(void)
  */
 int sys_env_destroy(int sysno, u_int envid)
 {
-	printf("calling env_destroy %d\n", envid);
-	/*
-		printf("[%08x] exiting gracefully\n", curenv->env_id);
-		env_destroy(curenv);
-	*/
 	int r;
 	struct Env *e;
 
@@ -229,7 +221,6 @@ int sys_mem_unmap(int sysno, u_int envid, u_int va)
  */
 int sys_env_alloc(void)
 {
-	// Your code here.
 	int r;
 	struct Env *e;
 
@@ -239,11 +230,11 @@ int sys_env_alloc(void)
 	}
 	Pde *src_pgdir = curenv->env_pgdir, *dst_pgdir = e->env_pgdir;
 	for(u_long pdx = 0; pdx < PDX(ULIM); ++pdx) {
-		if(!(src_pgdir[pdx] & PDE_PAGE_TABLE))
+		if((src_pgdir[pdx] & PDE_PAGE_TABLE) != PDE_PAGE_TABLE)
 			continue;
 		Pte *table = KADDR(PTE_ADDR(src_pgdir[pdx]));
 		for(u_long offset = 0; offset < PDMAP; offset += BY2PG) {
-			if(!(table[PTX(offset)] & PTE_V))
+			if((table[PTX(offset)] & PTE_V) != PTE_V)
 				continue;
 			u_long va = (pdx << PDSHIFT) | offset;
 			struct Page *p = pa2page(PG_ADDR_BASE(table[PTX(offset)]));
@@ -261,7 +252,6 @@ int sys_env_alloc(void)
 				printf("sys_env_alloc: unable to insert a page\n");
 				return r;
 			}
-			printf("copy page %x to %x at %x\n", p, np, va);
 		}
 	}
 	bcopy((void *)EXCSTACK - sizeof(struct Trapframe), &(e->env_tf), sizeof(struct Trapframe));
@@ -269,7 +259,6 @@ int sys_env_alloc(void)
 	e->env_tf.regs[0] = 0;
 
 	return e->env_id;
-	//	panic("sys_env_alloc not implemented");
 }
 
 void my_set_env_status(struct Env *env, u_int status) {
@@ -278,12 +267,7 @@ void my_set_env_status(struct Env *env, u_int status) {
 	}
 	env->env_status = status;
 	if(status == ENV_RUNNABLE) {
-		// struct Env *penv;
-		// if(env->env_parent_id && envid2env(env->env_parent_id, &penv, 0) >= 0 && penv->env_status == ENV_RUNNABLE) {
-			// LIST_INSERT_AFTER(penv, env, env_sched_link);
-		// } else {
-			LIST_INSERT_HEAD(&env_sched_list, env, env_sched_link);
-		// }
+		LIST_INSERT_HEAD(&env_sched_list, env, env_sched_link);
 	} else if(status == ENV_NOT_RUNNABLE) {
 		LIST_REMOVE(env, env_sched_link);
 	} else if(status == ENV_FREE) {
@@ -306,7 +290,6 @@ void my_set_env_status(struct Env *env, u_int status) {
  */
 int sys_set_env_status(int sysno, u_int envid, u_int status)
 {
-	// Your code here.
 	struct Env *env;
 	int ret;
 
@@ -318,11 +301,9 @@ int sys_set_env_status(int sysno, u_int envid, u_int status)
 		printf("sys_set_env_status: invalib envid\n");
 		return ret;
 	}
-	// env->env_status = status;
 	my_set_env_status(env, status);
 
 	return 0;
-	//	panic("sys_env_set_status not implemented");
 }
 
 /* Overview:
@@ -359,7 +340,6 @@ int sys_set_trapframe(int sysno, u_int envid, struct Trapframe *tf)
  */
 void sys_panic(int sysno, char *msg)
 {
-	// no page_fault_mode -- we are trying to panic!
 	panic("%s", msg);
 }
 
@@ -376,7 +356,7 @@ void sys_panic(int sysno, char *msg)
  * 	This syscall will set the current process's status to 
  * ENV_NOT_RUNNABLE, giving up cpu. 
  */
-void sys_ipc_recv(int sysno, u_int dstva)
+int sys_ipc_recv(int sysno, u_int dstva, u_int *whom, u_int *perm)
 {
 	if(dstva >= UTOP){
 		printf("sys_ipc_recv: wrong dstva %x\n", dstva);
@@ -384,7 +364,6 @@ void sys_ipc_recv(int sysno, u_int dstva)
 	}
 	curenv->env_ipc_recving = 1;
 	curenv->env_ipc_dstva = dstva;
-	// curenv->env_status = ENV_NOT_RUNNABLE;
 	my_set_env_status(curenv, ENV_NOT_RUNNABLE);
 	sys_yield();
 }
@@ -428,7 +407,7 @@ int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva,
 	}
 
 	if(srcva) {
-		if((p = page_lookup(curenv->env_pgdir, srcva, 0)) < 0) {
+		if((p = page_lookup(curenv->env_pgdir, srcva, 0)) <= 0) {
 			printf("sys_ipc_can_send: send srcva %x is not exist\n", srcva);
 			return p;
 		}
@@ -440,10 +419,31 @@ int sys_ipc_can_send(int sysno, u_int envid, u_int value, u_int srcva,
 
 	e->env_ipc_perm = perm | PTE_V | PTE_R;
 	e->env_ipc_recving = 0;
-	// e->env_status = ENV_RUNNABLE;
-	my_set_env_status(e, ENV_RUNNABLE);
 	e->env_ipc_value = value;
 	e->env_ipc_from = curenv->env_id;
+
+	e->env_tf.regs[0] = e->env_ipc_value;
+	u_int *r_whom = (u_int *)e->env_tf.regs[2], *r_perm = (u_int *)e->env_tf.regs[3];
+	printf("r_whom: %x, r_perm: %x\n", r_whom, r_perm);
+	if(r_whom) {
+		struct Page *p = page_lookup(e->env_pgdir, r_whom, NULL);
+		if(p > 0) {
+			*(u_int *)(page2kva(p) | PG_ADDR_OFFSET(r_whom)) = e->env_ipc_from;
+		} else {
+			printf("sys_ipc_can_send: r_whom is not valid\n");
+		}
+	}
+	if(r_perm) {
+		struct Page *p = page_lookup(e->env_pgdir, r_perm, NULL);
+		if(p > 0) {
+			*(u_int *)(page2kva(p) | PG_ADDR_OFFSET(r_perm)) = e->env_ipc_perm;
+		} else {
+			printf("sys_ipc_can_send: r_perm is not valid\n");
+		}
+	}
+
+	// e->env_status = ENV_RUNNABLE;
+	my_set_env_status(e, ENV_RUNNABLE);
 
 	return 0;
 }
