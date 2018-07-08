@@ -4,6 +4,7 @@
 
 void _exit(void)
 {
+    close_all();
 	syscall_env_destroy(0);
 }
 
