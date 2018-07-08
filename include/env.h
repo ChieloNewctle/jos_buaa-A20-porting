@@ -37,6 +37,8 @@ struct Env {
 	u_int env_ipc_recving;          // env is blocked receiving
 	u_int env_ipc_dstva;		// va at which to map received page
 	u_int env_ipc_perm;		// perm of page mapping received
+	u_int *env_ipc_arg_whom;
+	u_int *env_ipc_arg_perm;
 
 	// Lab 6 scheduler counts
 	u_int env_runs;			// number of times been env_run'ed
